@@ -2,9 +2,9 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
-from PIL import Image
+from django.shortcuts import get_object_or_404
 
-from posts.models import Group, Post, User
+from posts.models import Comment, Follow, Group, Post, User
 
 
 class UsersTest(TestCase):
@@ -162,3 +162,77 @@ class CacheTest(TestCase):
         cache.clear()
         response_after_clear = self.client.get(reverse("index"))
         self.assertContains(response_after_clear, self.post_check.text)
+
+
+class Project06Test(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="yser",
+            password="test_pass"
+        )
+        self.following_user = User.objects.create_user(
+            username="following_user",
+            password="test_pass"
+        )
+        self.post = Post.objects.create(
+            text="test text1",
+            author=self.following_user
+        )
+
+    def test_auth_user_following(self):
+        self.client.force_login(self.user)
+        author = get_object_or_404(User, username=self.following_user.username)
+        following = self.client.get(
+            reverse("profile_follow", args=[self.following_user.username]))
+        response = Follow.objects.filter(user=self.user,
+                                         author=author).exists()
+        self.assertEqual(response, True)
+
+    def test_auth_user_unfollowing(self):
+        self.client.force_login(self.user)
+        author = get_object_or_404(User, username=self.following_user.username)
+        following = self.client.get(
+            reverse("profile_follow", args=[self.following_user.username]))
+        unfollowing = self.client.get(
+            reverse("profile_unfollow", args=[self.following_user.username]))
+        response = Follow.objects.filter(user=self.user,
+                                         author=author).exists()
+        self.assertEqual(response, False)
+
+    def test_post_in_follow_index(self):
+        self.client.force_login(self.user)
+        following = self.client.get(
+            reverse("profile_follow", args=[self.following_user.username]))
+        response = self.client.get(reverse("follow_index"))
+        self.assertContains(response, self.post.text)
+
+    def test_post_not_in_follow_index(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("follow_index"))
+        self.assertNotContains(response, self.post.text)
+
+    def test_add_comment_auth_user(self):
+        self.client.force_login(self.user)
+        add_comment = self.client.post(
+            reverse("add_comment", args=[self.post.author, self.post.id]),
+            {'text': 'new_comment'}
+        )
+        response = Comment.objects.filter(author=self.user,
+                                          post=self.post).exists()
+        self.assertEqual(response, True)
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.text, "new_comment")
+        self.assertEqual(comment.author, self.user)
+
+    def test_add_comment_not_auth_user(self):
+        add_comment = self.client.post(
+            reverse("add_comment", args=[self.post.author, self.post.id]),
+            {'text': 'new_comment'}
+        )
+        self.assertEqual(add_comment.status_code, 302)
+        comment = Comment.objects.count()
+        self.assertEqual(comment, 0)
+
+

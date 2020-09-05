@@ -43,3 +43,10 @@ class Comment(models.Model):
                                related_name="comments")
     text = models.TextField(verbose_name="Текст комментария", )
     created = models.DateTimeField("date published", auto_now_add=True)
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name="follower")
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name="following")
