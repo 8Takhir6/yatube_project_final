@@ -17,7 +17,7 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    post_list = group.posts.order_by("-pub_date").all()
+    post_list = group.posts.all()
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
@@ -40,7 +40,7 @@ def new_post(request):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    author_posts = author.posts.order_by("-pub_date")
+    author_posts = author.posts
     following = Follow.objects.filter(user__username=request.user,
                                       author__username=username).exists()
     paginator = Paginator(author_posts, 6)

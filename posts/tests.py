@@ -1,5 +1,3 @@
-import os
-
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import get_object_or_404
