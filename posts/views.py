@@ -40,7 +40,7 @@ def new_post(request):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    author_posts = author.posts
+    author_posts = author.posts.all()
     following = Follow.objects.filter(user__username=request.user,
                                       author__username=username).exists()
     paginator = Paginator(author_posts, 6)
