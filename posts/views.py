@@ -7,7 +7,7 @@ from posts.models import Follow, Group, Post, User
 
 
 def index(request):
-    post_list = Post.objects.order_by("-pub_date").all()
+    post_list = Post.objects.all()
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
@@ -28,20 +28,19 @@ def group_posts(request, slug):
 @login_required
 def new_post(request):
     form = PostForm(request.POST or None, files=request.FILES or None)
-    if request.method == "POST":
-        if form.is_valid():
-            post_form_get = form.save(commit=False)
-            post_form_get.author = request.user
-            post_form_get.save()
-            return redirect("index")
-    return render(request, "posts/new.html", {"form": form})
+    if request.method != "POST":
+        return render(request, "posts/new.html", {"form": form})
+    if not form.is_valid():
+        return render(request, "posts/new.html", {"form": form})
+    post_form_get = form.save(commit=False)
+    post_form_get.author = request.user
+    post_form_get.save()
+    return redirect("index")
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     author_posts = author.posts.order_by("-pub_date")
-    # following = Follow.objects.filter(author=author, user=request.user).exists
-    # так не проходит pytest
     following = Follow.objects.filter(user__username=request.user,
                                       author__username=username).exists()
     paginator = Paginator(author_posts, 6)

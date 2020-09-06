@@ -1,8 +1,10 @@
+import os
+
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.shortcuts import get_object_or_404
 from django.test import Client, TestCase
 from django.urls import reverse
-from django.shortcuts import get_object_or_404
 
 from posts.models import Comment, Follow, Group, Post, User
 
@@ -179,6 +181,7 @@ class Project06Test(TestCase):
             text="test text1",
             author=self.following_user
         )
+        cache.clear()
 
     def test_auth_user_following(self):
         self.client.force_login(self.user)
@@ -234,5 +237,3 @@ class Project06Test(TestCase):
         self.assertEqual(add_comment.status_code, 302)
         comment = Comment.objects.count()
         self.assertEqual(comment, 0)
-
-

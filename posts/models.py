@@ -28,7 +28,7 @@ class Post(models.Model):
                               blank=True, null=True)
 
     def __str__(self):
-        return self.text
+        return self.text[:20]
 
     class Meta:
         ordering = ("-pub_date",)
